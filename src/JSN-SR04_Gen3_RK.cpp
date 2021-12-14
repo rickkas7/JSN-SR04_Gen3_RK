@@ -43,6 +43,15 @@ JSN_SR04_Gen3::~JSN_SR04_Gen3() {
     delete[] txBuffer;
 }
 
+JSN_SR04_Gen3 &JSN_SR04_Gen3::withDistanceAlarm(DistanceAlarm distanceAlarm) { 
+    this->distanceAlarm = distanceAlarm; 
+
+    withSamplePeriodicMs(distanceAlarm.periodMs);
+    
+    return *this; 
+};
+
+
 bool JSN_SR04_Gen3::setup() {
     if (trigPin == PIN_INVALID || echoPin == PIN_INVALID || unusedPin1 == PIN_INVALID || unusedPin2 == PIN_INVALID) {
         return false;
@@ -86,15 +95,29 @@ bool JSN_SR04_Gen3::setup() {
 bool JSN_SR04_Gen3::sampleOnce() {
 
     if (isIdle) {
-        stateHandler = &JSN_SR04_Gen3::startState;
-        isIdle = false;
+        if (digitalRead(echoPin) == LOW) {
+            stateHandler = &JSN_SR04_Gen3::startState;
+            isIdle = false;
 
-        return true;
+            return true;
+        }
     }
-    else {
-        return false;
-    }
+
+    setResult(DistanceResult::Status::BUSY);
+    return false;
 }
+
+JSN_SR04_Gen3::DistanceResult JSN_SR04_Gen3::sampleOnceSync() {
+
+    if (sampleOnce()) {
+        while(lastResult.status == DistanceResult::Status::IN_PROGRESS) {
+            delay(1);
+        }
+    }
+
+    return getLastResult(); 
+}
+
 
 void JSN_SR04_Gen3::loop() {
 
@@ -110,12 +133,44 @@ void JSN_SR04_Gen3::setResult(DistanceResult::Status status, double distanceM) {
     }
 }
 
+unsigned long JSN_SR04_Gen3::getSampleTimeMs() const {
+
+    /*
+    The getSampleTimeMs() method returns the number of milliseconds it takes to process a sample. 
+    In practice it might take a few milliseconds longer because of the delays in dispatching loop().
+
+    The formula is:
+
+    - T = (2 × D) / C
+    - leadingOverheadMs = leadingOverhead * 16 / 1000 = 152 * 16 / 1000 = 2.432 ms
+    - Cms = 0.340 meters/millisecond
+    - Tms = (2 × D) / Cms + leadingOverheadMs
+
+    For the default of D = 1 meter:
+
+    - D = 1 meter
+    - Tms = (2 × D) / Cms + leadingOverheadMs
+    - Tms = 2 / 0.340 + 2.432
+    - Tms = 8.31 ms (rounded up to 9)
+
+    Thus in theory you could sample at around every 9 milliseconds, maybe 10, but it's probably 
+    best to limit it to 100 milliseconds, or even 500 milliseconds, to be safe. If you sample 
+    frequently, be sure to handle the case where BUSY status is returned. This means that that 
+    sensor has not yet reset the ECHO output low and a sample cannot be taken yet.
+    */    
+    double leadingOverheadMs = ((double)leadingOverhead) * 16.0 / 1000.0;
+
+    double Tms = (2 * maxLengthM) / 0.340 + leadingOverheadMs;
+
+    return (unsigned long) ceil(Tms);
+}
+
+
 
 void JSN_SR04_Gen3::idleState() {
     if (samplePeriodic) {
         if (millis() - sampleTime >= samplePeriodic) {
-            stateHandler = &JSN_SR04_Gen3::startState;
-            isIdle = false;
+            sampleOnce();
         }
     }
 }
@@ -219,13 +274,68 @@ void JSN_SR04_Gen3::sampleState() {
         pulseUs += countOneBits(rxBuffer[ii]);
     }
 
-    double distanceM = ((double)pulseUs) / 1000000 * 170.0;
+    if (rxBuffer[numSamples - 1] == 0) {
+        double distanceM = ((double)pulseUs) / 1000000 * 170.0;
 
-    setResult(DistanceResult::Status::SUCCESS, distanceM);
+        setResult(DistanceResult::Status::SUCCESS, distanceM);
 
+        if (distanceAlarm.isValid()) {
+            distanceAlarmCallback(lastResult);
+        }
+    }
+    else {
+        setResult(DistanceResult::Status::RANGE_ERROR);
+    }
 
     stateHandler = &JSN_SR04_Gen3::idleState;
 
+}
+
+void JSN_SR04_Gen3::distanceAlarmCallback(DistanceResult distanceResult) {
+
+    if (inAlarm) {
+        if (distanceAlarm.direction == DistanceAlarm::Direction::GREATER_THAN) {
+            if (distanceResult.getDistanceM() < (distanceAlarm.getDistanceM() + distanceAlarm.hysteresis.getDistanceM()) ) {
+                // Exiting alarm
+                inAlarm = false;
+            }
+        }
+        else {
+            if (distanceResult.getDistanceM() > (distanceAlarm.getDistanceM() - distanceAlarm.hysteresis.getDistanceM()) ) {
+                // Exiting alarm
+                inAlarm = false;
+            }
+
+        }
+        if (!inAlarm && callback) {
+            // Exiting alarm
+            DistanceResult tempDistanceResult;
+            tempDistanceResult.status = DistanceResult::Status::EXIT_ALARM;
+            tempDistanceResult.distanceM = distanceResult.getDistanceM();
+            callback(tempDistanceResult);
+        }
+    }
+    else {
+        if (distanceAlarm.direction == DistanceAlarm::Direction::GREATER_THAN) {
+            if (distanceResult.getDistanceM() > distanceAlarm.getDistanceM()) {
+                // Entering alarm
+                inAlarm = true;
+            }
+        }
+        else {
+            if (distanceResult.getDistanceM() < distanceAlarm.getDistanceM()) {
+                // Entering alarm
+                inAlarm = true;
+            }            
+        }
+        if (inAlarm && callback) {
+            // Entering alarm
+            DistanceResult tempDistanceResult;
+            tempDistanceResult.status = DistanceResult::Status::ENTER_ALARM;
+            tempDistanceResult.distanceM = distanceResult.getDistanceM();
+            callback(tempDistanceResult);
+        }
+    }
 }
 
 // [static] 
