@@ -158,6 +158,7 @@ $(function() {
 <div class="ttc" id="aclass_j_s_n___s_r04___gen3_1_1_distance_result_html_a8a6f810c551b9034b1fb69d087b919a6a20b3033861fb9032b6a6f96c5ad3ef66"><div class="ttname"><a href="class_j_s_n___s_r04___gen3_1_1_distance_result.html#a8a6f810c551b9034b1fb69d087b919a6a20b3033861fb9032b6a6f96c5ad3ef66">JSN_SR04_Gen3::DistanceResult::Status::RANGE_ERROR</a></div><div class="ttdeci">@ RANGE_ERROR</div><div class="ttdoc">Too close or too far away to detect.</div></div>
 <div class="ttc" id="aclass_j_s_n___s_r04___gen3_1_1_distance_result_html_a8a6f810c551b9034b1fb69d087b919a6ad0749aaba8b833466dfcbb0428e4f89c"><div class="ttname"><a href="class_j_s_n___s_r04___gen3_1_1_distance_result.html#a8a6f810c551b9034b1fb69d087b919a6ad0749aaba8b833466dfcbb0428e4f89c">JSN_SR04_Gen3::DistanceResult::Status::SUCCESS</a></div><div class="ttdeci">@ SUCCESS</div><div class="ttdoc">Success, got a valid looking measurement.</div></div>
 </div><!-- fragment --><h1><a class="el" href="class_j_s_n___s_r04___gen3.html" title="Class for a JSN-SR04 ultrasonic distance sensor.">JSN_SR04_Gen3</a> API</h1>
+<p >The full browseable API can be found <a href="https://rickkas7.github.io/JSN-SR04_Gen3_RK/">online</a> or in the docs folder docs/index.html offline.</p>
 <p >Class for a JSN-SR04 ultrasonic distance sensor.</p>
 <p >Note: You can effectively only have one instance of this class per device, because there is only one I2S peripheral, which is what is used to implement the device driver.</p>
 <hr  />
@@ -507,7 +508,16 @@ $(function() {
 <li>Tms = 2 / 0.340 + 2.432</li>
 <li>Tms = 8.31 ms (rounded up to 9)</li>
 </ul>
-<p >Thus in theory you could sample at around every 9 milliseconds, maybe 10, but it's probably best to limit it to 100 milliseconds, or even 500 milliseconds, to be safe. If you sample frequently, be sure to handle the case where BUSY status is returned. This means that that sensor has not yet reset the ECHO output low and a sample cannot be taken yet. </p>
+<p >Thus in theory you could sample at around every 9 milliseconds, maybe 10, but it's probably best to limit it to 100 milliseconds, or even 500 milliseconds, to be safe. If you sample frequently, be sure to handle the case where BUSY status is returned. This means that that sensor has not yet reset the ECHO output low and a sample cannot be taken yet.</p>
+<h2>Version History</h2>
+<h3>0.0.2 (2021-12-15)</h3>
+<ul>
+<li>Fixed a bug that caused busy errors</li>
+</ul>
+<h3>0.0.1 (2021-12-15)</h3>
+<ul>
+<li>Initial version </li>
+</ul>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->

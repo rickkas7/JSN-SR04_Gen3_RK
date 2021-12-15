@@ -725,3 +725,12 @@ For the default of D = 1 meter:
 
 Thus in theory you could sample at around every 9 milliseconds, maybe 10, but it's probably best to limit it to 100 milliseconds, or even 500 milliseconds, to be safe. If you sample frequently, be sure to handle the case where BUSY status is returned. This means that that sensor has not yet reset the ECHO output low and a sample cannot be taken yet.
 
+## Version History
+
+### 0.0.2 (2021-12-15)
+
+- Fixed a bug that caused busy errors
+
+### 0.0.1 (2021-12-15)
+
+- Initial version

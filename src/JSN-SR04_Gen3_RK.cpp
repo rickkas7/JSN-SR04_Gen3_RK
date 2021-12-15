@@ -164,6 +164,7 @@ unsigned long JSN_SR04_Gen3::getSampleTimeMs() const {
 void JSN_SR04_Gen3::idleState() {
     if (samplePeriodic) {
         if (millis() - sampleTime >= samplePeriodic) {
+            sampleTime = millis();
             sampleOnce();
         }
     }
@@ -282,6 +283,7 @@ void JSN_SR04_Gen3::sampleState() {
     }
 
     stateHandler = &JSN_SR04_Gen3::idleState;
+    isIdle = true;
 
 }
 
