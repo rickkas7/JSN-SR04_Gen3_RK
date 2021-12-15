@@ -130,6 +130,8 @@ void distanceCallback(JSN_SR04_Gen3::DistanceResult result) {
 
 ## JSN_SR04_Gen3 API
 
+The full browseable API can be found [online](https://rickkas7.github.io/JSN-SR04_Gen3_RK/) or in the docs folder docs/index.html offline.
+
 Class for a JSN-SR04 ultrasonic distance sensor.
 
 Note: You can effectively only have one instance of this class per device, because there is only one I2S peripheral, which is what is used to implement the device driver.
