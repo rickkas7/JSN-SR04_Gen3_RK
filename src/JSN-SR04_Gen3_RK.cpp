@@ -12,19 +12,13 @@
 #include "nrfx_i2s.h"
 #include <math.h>
 
+// These are defined here because they require nrfx_i2s.h to be included, but this requires that
+// SCK be undefined, so we don't want to do it from JSN-SR04_Gen3_RK.h, so these can't be 
+// class members.
 static volatile int _buffersRequested = 0;
 static nrfx_i2s_buffers_t _i2sBuffers;
-/*
-static const size_t NUM_SAMPLES = 180;
-static volatile int buffersRequested = 0;
-static uint16_t rxBuffer[NUM_SAMPLES];
-static uint16_t txBuffer[NUM_SAMPLES];
-static nrfx_i2s_buffers_t i2sBuffer = {
-		.p_rx_buffer = (uint32_t *)rxBuffer,
-		.p_tx_buffer = (uint32_t *)txBuffer)
-};
-*/
 
+// Interrupt handler function
 static void _dataHandler(nrfx_i2s_buffers_t const *p_released, uint32_t status) {
 	if (status == NRFX_I2S_STATUS_NEXT_BUFFERS_NEEDED) {
 		_buffersRequested++;

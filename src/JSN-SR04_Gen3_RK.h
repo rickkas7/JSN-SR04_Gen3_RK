@@ -305,6 +305,16 @@ public:
      */
     class DistanceAlarmLessThan : public DistanceAlarm {
     public:
+        /**
+         * @brief This helper class is used to set a DistanceAlarm in LESS_THAN mode with the specified distance and default settings
+         * 
+         * @param distance The distance to alarm at, as a Distance object. You can pass a DistanceCm or DistanceInch object as 
+         * the value if desired
+         * 
+         * Example:
+         * 
+         *  .withDistanceAlarm( JSN_SR04_Gen3::DistanceAlarmLessThan( JSN_SR04_Gen3::DistanceCm(5.0) ) )
+         */
         DistanceAlarmLessThan(Distance distance) {
             withDistance(distance);
             withDirection(DistanceAlarm::Direction::LESS_THAN);
@@ -316,13 +326,35 @@ public:
      */
     class DistanceAlarmGreaterThan : public DistanceAlarm {
     public:
+        /**
+         * @brief This helper class is used to set a DistanceAlarm in GREATER_THAN mode with the specified distance and default settings
+         * 
+         * @param distance The distance to alarm at, as a Distance object. You can pass a DistanceCm or DistanceInch object as 
+         * the value if desired
+         * 
+         * Example:
+         * 
+         *  .withDistanceAlarm( JSN_SR04_Gen3::DistanceAlarmGreaterThan( JSN_SR04_Gen3::DistanceCm(5.0) ) )
+         */
         DistanceAlarmGreaterThan(Distance distance) {
             withDistance(distance);
             withDirection(DistanceAlarm::Direction::GREATER_THAN);
         }
     };
 
+    /**
+     * @brief Construct the object. You typically instantiate one of these as a global variable.
+     * 
+     * Do not construct one of these objects on the stack in a function that returns. It needs
+     * to have a persistent lifetime to function correctly.
+     */
     JSN_SR04_Gen3();
+
+    /**
+     * @brief Destroy the object
+     * 
+     * You typically instantiate one of these as a global variable, so it will never be deleted.
+     */
     virtual ~JSN_SR04_Gen3();
 
     /**
@@ -337,7 +369,7 @@ public:
     /**
      * @brief Specifies the ECHO pin (INPUT)
      * 
-     * @param trigPin A pin, such as D2 or A0, or another port that is not being used, such as TX, RX, DAC, etc.
+     * @param echoPin A pin, such as D2 or A0, or another port that is not being used, such as TX, RX, DAC, etc.
      * 
      * @return JSN_SR04_Gen3& This object, for chaining options, fluent-style
      * 
@@ -409,7 +441,7 @@ public:
     /**
      * @brief Enabling periodic sampling mode
      * 
-     * @param period The sampling period in milliseconds
+     * @param periodMs The sampling period in milliseconds
      * @return JSN_SR04_Gen3& This object, for chaining options, fluent-style
      * 
      * It's recommended to specify a sampling period greater than safetyTimeoutMs milliseconds (currently 300).
@@ -547,27 +579,24 @@ protected:
      */
     void distanceAlarmCallback(DistanceResult distanceResult);
 
-    pin_t trigPin = PIN_INVALID;
-    pin_t echoPin = PIN_INVALID;
-    pin_t unusedPin1 = PIN_INVALID;
-    pin_t unusedPin2 = PIN_INVALID;
-    float maxLengthM = 1.0;
-    std::function<void(DistanceResult)> callback = nullptr;
-    size_t numSamples = 0;
-    uint16_t *rxBuffer = nullptr;
-    uint16_t *txBuffer = nullptr;
-    bool isIdle = true;
-    DistanceResult lastResult;
-    unsigned long samplePeriodic = 0;
-    DistanceAlarm distanceAlarm;
-    bool inAlarm = false;
-
-    size_t leadingOverhead = 152; // Must be a multiple of 4
-    unsigned long safetyTimeoutMs = 300; 
-    // double maxValue = std::numeric_limits<double>::infinity();
-
-    unsigned long sampleTime = 0;
-    std::function<void(JSN_SR04_Gen3&)> stateHandler = &JSN_SR04_Gen3::idleState;
+    pin_t trigPin = PIN_INVALID; //!< TRIG pin (OUTPUT)
+    pin_t echoPin = PIN_INVALID; //!< ECHO pin (input)
+    pin_t unusedPin1 = PIN_INVALID; //!< SCK output (1 mHz)
+    pin_t unusedPin2 = PIN_INVALID; //!< LRCK output (32 kHz)
+    float maxLengthM = 1.0; //!< Maximum distance that can be read (affects memory and sample period)
+    std::function<void(DistanceResult)> callback = nullptr; //!< Callback after sample or error
+    size_t numSamples = 0; //!< Number of samples, depends on maxLengthM and leadingOverhead
+    uint16_t *rxBuffer = nullptr; //!< ECHO pin buffer
+    uint16_t *txBuffer = nullptr; //!< TRIG pin buffer
+    bool isIdle = true; //!< True if in idleState
+    DistanceResult lastResult; //!< The last sample read (single, periodic, or alarm)
+    unsigned long samplePeriodic = 0; //!< If in periodic sample mode, the number of milliseconds in period (0 = disabled)
+    DistanceAlarm distanceAlarm; //!< Distance alarm mode settings, if enabled. If distance == 0, then disabled.
+    bool inAlarm = false; //!< True if the distance alarm has been notified
+    size_t leadingOverhead = 152; //!< How long in 16-bit samples from falling TRIG to rising ECHO (maximum, typical). Must be a multiple of 4. 
+    unsigned long safetyTimeoutMs = 300;  //!< Maximum amount of time to wait if sensor does not respond.
+    unsigned long sampleTime = 0; //!< millis value when last sample was taken, used for periodic sampling
+    std::function<void(JSN_SR04_Gen3&)> stateHandler = &JSN_SR04_Gen3::idleState; //!< state handler function
 };
 
 #endif /* __JSR_SR04_GEN3_RK_H */
