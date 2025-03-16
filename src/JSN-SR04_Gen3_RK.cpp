@@ -177,8 +177,11 @@ void JSN_SR04_Gen3::startState() {
 
 	attachInterruptDirect(I2S_IRQn, nrfx_i2s_irq_handler, false);
 
-
+#if defined (SYSTEM_VERSION_v500)
+    hal_pin_info_t *pinMap = hal_pin_map();
+#else
     Hal_Pin_Info *pinMap = HAL_Pin_Map();
+#endif
 
     nrfx_i2s_config_t config = NRFX_I2S_DEFAULT_CONFIG;
 

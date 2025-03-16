@@ -727,6 +727,10 @@ Thus in theory you could sample at around every 9 milliseconds, maybe 10, but it
 
 ## Version History
 
+### 0.0.3 (2025-03-16)
+
+- Fix compatibility with Device OS 5.0.0 and later with HAL_Pin_Map().
+
 ### 0.0.2 (2021-12-15)
 
 - Fixed a bug that caused busy errors
