@@ -727,6 +727,11 @@ Thus in theory you could sample at around every 9 milliseconds, maybe 10, but it
 
 ## Version History
 
+### 0.0.4 (2025-12-24)
+
+- Fixed a linker error for nrfx_i2s_init, nrfx_i2s_stop, and others with Device OS 6.3.3 and later.
+
+
 ### 0.0.3 (2025-03-16)
 
 - Fix compatibility with Device OS 5.0.0 and later with HAL_Pin_Map().
